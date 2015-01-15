@@ -1,11 +1,6 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author: "Alexandre Ph. Clement"
-date: "13/01/2015"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
+Alexandre Ph. Clement  
+13/01/2015  
 
 
 ## Introduction
@@ -18,7 +13,8 @@ This assignment makes use of data from a personal activity monitoring device. Th
 
 The dataset is downloaded from the internet and unzip. The result is a csv file.
 
-```{r, echo = T, eval = T, message = FALSE, cache = TRUE} 
+
+```r
   download.file(url = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", 
                 destfile = "activity.zip", method = "curl")
 
@@ -28,7 +24,8 @@ The dataset is downloaded from the internet and unzip. The result is a csv file.
 ## Loading and preprocessing the data
 The csv file is loaded into the memory. The dates are parsed with the default format.
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
   raw_activity <- read.csv('activity.csv', stringsAsFactors = F) 
   # parse dates
   raw_activity$date <- as.Date(raw_activity$date)
@@ -37,11 +34,22 @@ The csv file is loaded into the memory. The dates are parsed with the default fo
   head(activity)
 ```
 
+```
+##     steps       date interval
+## 289     0 2012-10-02        0
+## 290     0 2012-10-02        5
+## 291     0 2012-10-02       10
+## 292     0 2012-10-02       15
+## 293     0 2012-10-02       20
+## 294     0 2012-10-02       25
+```
+
 ## What is mean total number of steps taken per day?
 
 ### Histogram
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 library(dplyr)
 library(ggplot2)
 
@@ -58,23 +66,36 @@ g <- g + labs(title = "Number of steps taken per day")
 g
 ```
 
+![plot of chunk unnamed-chunk-3](./PA1_template_files/figure-html/unnamed-chunk-3.png) 
+
 ### Mean
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 mean(results$steps)
+```
+
+```
+## [1] 10766
 ```
 
 ### Median
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 median(results$steps)
+```
+
+```
+## [1] 10765
 ```
 
 ## What is the average daily activity pattern?
 
 ### Plot
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 avgByInterval <- activity %>%
   group_by(interval) %>%
   summarise(avg = mean(steps))
@@ -85,19 +106,31 @@ g <- g + labs(x = "Daily 5-min interval", y = "Average number of steps", title =
 g
 ```
 
+![plot of chunk unnamed-chunk-6](./PA1_template_files/figure-html/unnamed-chunk-6.png) 
+
 ### 5-minute interval containing the maximum number of steps
 
-```{r, echo = T, eval = T}
+
+```r
 orderByAvg <- avgByInterval %>% arrange(desc(avg))
 orderByAvg[1, ]$interval
+```
+
+```
+## [1] 835
 ```
 
 ## Imputing missing values
 
 ### Total number of missing values in the dataset 
 
-```{r, echo = T, eval = T}
+
+```r
 sum(!complete.cases(raw_activity)) 
+```
+
+```
+## [1] 2304
 ```
 
 ### Computing 5-minute interval mean values
@@ -106,7 +139,8 @@ Now we will devise a strategy for filling in all of the missing values in the da
 We can not use day mean value for imputing because values are missing for the whole day in each case.
 We will use the mean for the corresponding 5-minute interval instead.
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 # recompute 5-minute interval average value
 means <- raw_activity %>%
   group_by(interval) %>%
@@ -114,11 +148,29 @@ means <- raw_activity %>%
 means
 ```
 
+```
+## Source: local data frame [288 x 2]
+## 
+##    interval     avg
+## 1         0 1.71698
+## 2         5 0.33962
+## 3        10 0.13208
+## 4        15 0.15094
+## 5        20 0.07547
+## 6        25 2.09434
+## 7        30 0.52830
+## 8        35 0.86792
+## 9        40 0.00000
+## 10       45 1.47170
+## ..      ...     ...
+```
+
 ### Filling in the missing data
 
 Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 # replace NA with the mean of the corresponding 5-min interval
 new_activity <- raw_activity %>% 
   mutate(steps = ifelse(is.na(steps), means[means$interval %in% interval, ]$avg, steps))
@@ -126,7 +178,8 @@ new_activity <- raw_activity %>%
 
 ### Histogram of the new dataset
 
-```{r, echo = T, eval = T} 
+
+```r
 new_results <- new_activity %>%
   group_by(date) %>%
   summarise(steps = sum(steps))
@@ -142,16 +195,28 @@ g <- g + labs(title = "Number of steps taken per day")
 g
 ```
 
+![plot of chunk unnamed-chunk-11](./PA1_template_files/figure-html/unnamed-chunk-11.png) 
+
 ### Mean
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 mean(new_results$steps)
+```
+
+```
+## [1] 10766
 ```
 
 ### Median
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 median(new_results$steps)
+```
+
+```
+## [1] 10766
 ```
 
 ### Impact of imputing missing data 
@@ -167,13 +232,15 @@ The impact of imputing missing data on the estimates of the total daily number o
 
 Let's create a new variable dow indicating wether a given date is a weekday or weekend day.
 
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 library(lubridate)
 new_activity$dow <- as.factor(ifelse(wday(new_activity$date) %in% c(1, 7), "weekend", "weekday")) 
 ```
 
 ### Plot
-```{r, echo = T, eval = T, message = FALSE, cache = F} 
+
+```r
 avgByInterval <- new_activity %>%
   group_by(interval, dow) %>%
   summarise(avg = mean(steps))
@@ -183,4 +250,6 @@ g <- g + geom_line() + facet_grid(dow ~ .)
 g <- g + labs(x = "Daily 5-min interval", y = "Average number of steps", title = "Average daily activity pattern")
 g
 ```
+
+![plot of chunk unnamed-chunk-15](./PA1_template_files/figure-html/unnamed-chunk-15.png) 
 
